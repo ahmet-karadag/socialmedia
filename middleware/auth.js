@@ -1,7 +1,8 @@
 
 const jwt = require("jsonwebtoken");
+const User = require("../model/user");
 
-const authMiddleware = (req,res,next)=>{
+const authMiddleware = async(req,res,next)=>{
     const authHeader = req.headers.authorization;
 
     if(!authHeader || !authHeader.startsWith('Bearer')){
@@ -12,7 +13,12 @@ const authMiddleware = (req,res,next)=>{
 
     try {
         const decoded = jwt.verify(token,process.env.JWT_SECRET);
-        req.user = decoded;//token içindekileri requeste ekle
+        const user = await User.findById(decoded._id);
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        req.user = user;//token içindekileri requeste ekle
         next();
     } catch (error) {
         return res.status(401).json({message: 'expired token'});
